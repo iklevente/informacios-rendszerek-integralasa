@@ -1,0 +1,30 @@
+{
+  "name": "color-soap-rabbitmq",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Task 4: SOAP gateway + RabbitMQ color processing with DLQ",
+  "scripts": {
+    "build": "tsc",
+    "start:gateway": "node dist/soap-gateway.js",
+    "start:client": "node dist/soap-client.js",
+    "start:consumer": "node dist/consumer.js",
+    "start:stats": "node dist/statistics-reporter.js",
+    "start:dlq": "node dist/dead-letter-reporter.js",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "prettier --write src/**/*.ts && eslint --fix src/**/*.ts"
+  },
+  "dependencies": {
+    "amqplib": "^0.10.4",
+    "soap": "^1.0.4"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/amqplib": "^0.10.5",
+    "@types/node": "^20.11.0",
+    "eslint": "^10.3.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.8.3",
+    "typescript": "^5.4.5",
+    "typescript-eslint": "^8.59.2"
+  }
+}

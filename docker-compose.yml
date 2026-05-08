@@ -1,0 +1,107 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [colornet]
+
+  soap-gateway:
+    build: .
+    image: color-soap-rabbitmq:latest
+    container_name: soap-gateway
+    command: ["node", "dist/soap-gateway.js"]
+    environment:
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      PORT: "8080"
+    ports:
+      - "8080:8080"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks: [colornet]
+
+  soap-client:
+    image: color-soap-rabbitmq:latest
+    container_name: soap-client
+    command: ["node", "dist/soap-client.js"]
+    environment:
+      GATEWAY_URL: http://soap-gateway:8080/wsdl?wsdl
+      INTERVAL_MS: "1000"
+    depends_on:
+      - soap-gateway
+    networks: [colornet]
+
+  consumer-red:
+    image: color-soap-rabbitmq:latest
+    container_name: consumer-red
+    command: ["node", "dist/consumer.js"]
+    environment:
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      COLOR: RED
+      FAILURE_RATE: "0.3"
+      STATS_BATCH: "10"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks: [colornet]
+
+  consumer-green:
+    image: color-soap-rabbitmq:latest
+    container_name: consumer-green
+    command: ["node", "dist/consumer.js"]
+    environment:
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      COLOR: GREEN
+      FAILURE_RATE: "0.3"
+      STATS_BATCH: "10"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks: [colornet]
+
+  consumer-blue:
+    image: color-soap-rabbitmq:latest
+    container_name: consumer-blue
+    command: ["node", "dist/consumer.js"]
+    environment:
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      COLOR: BLUE
+      FAILURE_RATE: "0.3"
+      STATS_BATCH: "10"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks: [colornet]
+
+  statistics-reporter:
+    image: color-soap-rabbitmq:latest
+    container_name: statistics-reporter
+    command: ["node", "dist/statistics-reporter.js"]
+    environment:
+      RABBITMQ_URL: amqp://rabbitmq:5672
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks: [colornet]
+
+  dead-letter-reporter:
+    image: color-soap-rabbitmq:latest
+    container_name: dead-letter-reporter
+    command: ["node", "dist/dead-letter-reporter.js"]
+    environment:
+      RABBITMQ_URL: amqp://rabbitmq:5672
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks: [colornet]
+
+networks:
+  colornet:
+    driver: bridge
